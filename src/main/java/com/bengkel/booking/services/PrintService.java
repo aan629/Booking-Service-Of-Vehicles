@@ -5,7 +5,6 @@ import java.util.List;
 import com.bengkel.booking.models.BookingOrder;
 import com.bengkel.booking.models.Car;
 import com.bengkel.booking.models.ItemService;
-import com.bengkel.booking.models.MemberCustomer;
 import com.bengkel.booking.models.Vehicle;
 
 public class PrintService {
@@ -73,6 +72,8 @@ public class PrintService {
 			result += (itemService.getServiceName() + ", ");
 		}
 
+		result = result.substring(0, result.length()-2);
+
 		return result;
 	}
 
@@ -85,7 +86,7 @@ public class PrintService {
 
 	    int number = 1;
 	    for (BookingOrder booking : listAllBookingOrder) {
-	    	System.out.format(formatTable, number, booking.getBookingId(), booking.getCustomer().getName(), booking.getPaymentMethod(), booking.getTotalServicePrice(), booking.getTotalPayment(), printItemService(booking.getServices()));
+	    	System.out.format(formatTable, number, booking.getBookingId(), booking.getCustomer().getName(), booking.getPaymentMethod(), String.format("%,d",(int)booking.getTotalServicePrice()), String.format("%,d",(int)booking.getTotalPayment()), printItemService(booking.getServices()));
 	    	number++;
 	    }
 	    System.out.printf(line);

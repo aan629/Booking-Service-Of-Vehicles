@@ -1,7 +1,6 @@
 package com.bengkel.booking.services;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.bengkel.booking.models.BookingOrder;
@@ -126,7 +125,7 @@ public class BengkelService {
 	//Booking atau Reservation
 	public static List<BookingOrder> addBookingOrder(List<Customer> listCustomer, List<ItemService> listAllItemService, int id){
 		listAllItemService = ItemServiceRepository.getAllItemService(); //Renew Ulang item service jika mau add Booking lagi
-		
+
 		List<BookingOrder> result = new ArrayList<BookingOrder>();
 		boolean isLooping = true;
 
@@ -235,44 +234,48 @@ public class BengkelService {
 		//Set list item service
 		MenuService.setListAllItemService(listChoiceServiceByVehicle);
 		
+		//Proses penambahan manual total payment booking pada countpay dan kebutuhan variable selanjutnya
+		BookingOrder booking = new BookingOrder();
+		booking.setTotalServicePrice(countPay);
+
 		//Proses Customer memilih Metode Pembayaran dan total payment
-		double totalPayment = 0;
 		String methodPayment = "";
 		if (listCustomer.get(0) instanceof MemberCustomer) {
 			methodPayment = Validation.validasiInput("Silahkan pilih metode pembayaran (Saldo Coin / Cash) : \n ", "Mohon maaf, pilihan pembayaran hanya 2 (Saldo Coin / Cash)", "Saldo Coin|SALDO COIN|saldo coin|Cash|CASH|cash");
 
 			if (methodPayment.equalsIgnoreCase("Saldo Coin")) {
 				if (countPay <= ((MemberCustomer)listCustomer.get(0)).getSaldoCoin()) {
-					methodPayment = "Saldo Coin";
-					totalPayment = countPay - (countPay / 10);
-					((MemberCustomer)listCustomer.get(0)).setSaldoCoin(((MemberCustomer)listCustomer.get(0)).getSaldoCoin() - totalPayment);
+					booking.setPaymentMethod("Saldo Coin");			
 				} else if (countPay > ((MemberCustomer)listCustomer.get(0)).getSaldoCoin()){
 					System.out.println("Mohon maaf, Saldo koinmu kurang jadi diharuskan pakai Cash saja");
-					methodPayment = "Cash";
-					totalPayment = countPay;
-				}
-				
+					booking.setPaymentMethod("Cash");
+				}		
 			} else {
-				methodPayment = "Cash";
-				totalPayment = countPay;
+				booking.setPaymentMethod("Cash");
 			}
 
 		} else {
-			methodPayment = "Cash";
-			totalPayment = countPay;
+			booking.setPaymentMethod("Cash");
 		}
 
+		//Menghitung total payment sesuai payment methodnya
+		booking.calculatePayment();
+		//Pengurangan Saldo Coin bagi Member Customer
+		if (listCustomer.get(0) instanceof MemberCustomer && booking.getPaymentMethod().equalsIgnoreCase("Saldo Coin")) {
+			((MemberCustomer)listCustomer.get(0)).setSaldoCoin(((MemberCustomer)listCustomer.get(0)).getSaldoCoin() - booking.getTotalPayment());
+		} 
+		
 		//Buat Booking ID
 		String bookingID = "Book-Cust" + String.format("-%03d", id) + listCustomer.get(0).getCustomerId().substring(listCustomer.get(0).getCustomerId().indexOf('-'));
 
 		//Buat List Booking Order
-		result.add(new BookingOrder(bookingID, listCustomer.get(0), listChoiceServiceByVehicle, methodPayment, countPay, totalPayment));
+		result.add(new BookingOrder(bookingID, listCustomer.get(0), listChoiceServiceByVehicle, booking.getPaymentMethod(), booking.getTotalServicePrice(), booking.getTotalPayment()));
 		
 		//Buat Pernyataan Booking Berhasil
 		System.out.println();
 		System.out.println("Booking Berhasil!!!.");
-		System.out.println("Total harga service : " + String.format("%,d",(int)countPay));
-		System.out.println("Total pembayaran    : " + String.format("%,d",(int)totalPayment));
+		System.out.println("Total harga service : " + String.format("%,d",(int)booking.getTotalServicePrice()));
+		System.out.println("Total pembayaran    : " + String.format("%,d",(int)booking.getTotalPayment()));
 		System.out.println();
 
 		return result;

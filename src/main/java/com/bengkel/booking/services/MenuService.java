@@ -2,7 +2,6 @@ package com.bengkel.booking.services;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 import com.bengkel.booking.models.BookingOrder;
 import com.bengkel.booking.models.Customer;
